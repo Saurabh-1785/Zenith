@@ -24,6 +24,10 @@ app.use('/resources', resourceRoutes);
 const taskRoutes = require('./routes/taskRoutes');
 app.use('/tasks', taskRoutes);
 
+const allocationRoutes = require('./routes/allocationRoutes');
+app.use('/allocate', allocationRoutes);
+app.use('/allocations', allocationRoutes);
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
