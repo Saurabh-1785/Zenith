@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 
+const API = 'http://localhost:5000'
 const COLORS = ['#6366f1', '#334155']
 
 export default function Dashboard() {
@@ -10,9 +11,9 @@ export default function Dashboard() {
   const [allocations, setAllocations] = useState([])
 
   useEffect(() => {
-    fetch('http://localhost:3000/resources').then(r => r.json()).then(setResources)
-    fetch('http://localhost:3000/tasks').then(r => r.json()).then(setTasks)
-    fetch('http://localhost:3000/allocations').then(r => r.json()).then(setAllocations)
+    fetch(`${API}/resources`).then(r => r.json()).then(setResources).catch(err => console.error('Failed to fetch resources:', err))
+    fetch(`${API}/tasks`).then(r => r.json()).then(setTasks).catch(err => console.error('Failed to fetch tasks:', err))
+    fetch(`${API}/allocations`).then(r => r.json()).then(setAllocations).catch(err => console.error('Failed to fetch allocations:', err))
   }, [])
 
   const totalCapacity = resources.reduce((sum, r) => sum + r.total_capacity, 0)

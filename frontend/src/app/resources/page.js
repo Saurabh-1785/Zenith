@@ -1,34 +1,48 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+const API = 'http://localhost:5000'
+
+function safeParseArray(value) {
+  if (Array.isArray(value)) return value
+  try { return JSON.parse(value) } catch { return [] }
+}
+
 export default function Resources() {
   const [resources, setResources] = useState([])
   const [form, setForm] = useState({ name: '', skills: '', total_capacity: '' })
   const [message, setMessage] = useState('')
 
   const fetchResources = () => {
-    fetch('http://localhost:3000/resources')
+    fetch(`${API}/resources`)
       .then(r => r.json())
       .then(setResources)
+      .catch(err => console.error('Failed to fetch resources:', err))
   }
 
   useEffect(() => { fetchResources() }, [])
 
   const handleSubmit = async () => {
-    const res = await fetch('http://localhost:3000/resources', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name,
-        skills: form.skills.split(',').map(s => s.trim()),
-        total_capacity: parseInt(form.total_capacity)
+    try {
+      const res = await fetch(`${API}/resources`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          skills: form.skills.split(',').map(s => s.trim()),
+          total_capacity: parseInt(form.total_capacity)
+        })
       })
-    })
-    const data = await res.json()
-    if (data.id) {
-      setMessage('Resource created successfully! ✅')
-      setForm({ name: '', skills: '', total_capacity: '' })
-      fetchResources()
+      const data = await res.json()
+      if (data.id) {
+        setMessage('Resource created successfully! ✅')
+        setForm({ name: '', skills: '', total_capacity: '' })
+        fetchResources()
+      } else {
+        setMessage(`❌ ${data.error || 'Failed to create resource'}`)
+      }
+    } catch (err) {
+      setMessage(`❌ Error: ${err.message}`)
     }
   }
 
@@ -88,7 +102,7 @@ export default function Resources() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {JSON.parse(r.skills).map((skill, j) => (
+                  {safeParseArray(r.skills).map((skill, j) => (
                     <span key={j} style={{
                       padding: '4px 10px', borderRadius: '20px',
                       background: '#1e1b4b', color: '#6366f1',

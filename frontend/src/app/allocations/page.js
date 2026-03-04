@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
+const API = 'http://localhost:5000'
+
 export default function Allocations() {
   const [allocations, setAllocations] = useState([])
   const [resources, setResources] = useState([])
@@ -10,8 +12,8 @@ export default function Allocations() {
   const [metrics, setMetrics] = useState(null)
 
   const fetchData = () => {
-    fetch('http://localhost:3000/allocations').then(r => r.json()).then(setAllocations)
-    fetch('http://localhost:3000/resources').then(r => r.json()).then(setResources)
+    fetch(`${API}/allocations`).then(r => r.json()).then(setAllocations).catch(err => console.error('Failed to fetch allocations:', err))
+    fetch(`${API}/resources`).then(r => r.json()).then(setResources).catch(err => console.error('Failed to fetch resources:', err))
   }
 
   useEffect(() => { fetchData() }, [])
@@ -19,15 +21,19 @@ export default function Allocations() {
   const runAllocation = async () => {
     setLoading(true)
     setMessage('')
-    const res = await fetch('http://localhost:3000/allocate', { method: 'POST' })
-    const data = await res.json()
+    try {
+      const res = await fetch(`${API}/allocate`, { method: 'POST' })
+      const data = await res.json()
 
-    if (data.error) {
-      setMessage(`❌ ${data.error}`)
-    } else {
-      setMessage(`✅ ${data.allocations.length} tasks allocated, ${data.unallocated.length} unallocated`)
-      setMetrics(data.metrics)
-      fetchData()
+      if (data.error) {
+        setMessage(`❌ ${data.error}`)
+      } else {
+        setMessage(`✅ ${data.allocations.length} tasks allocated, ${data.unallocated.length} unallocated`)
+        setMetrics(data.metrics)
+        fetchData()
+      }
+    } catch (err) {
+      setMessage(`❌ Error: ${err.message}`)
     }
     setLoading(false)
   }

@@ -1,37 +1,51 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+const API = 'http://localhost:5000'
+
+function safeParseArray(value) {
+  if (Array.isArray(value)) return value
+  try { return JSON.parse(value) } catch { return [] }
+}
+
 export default function Tasks() {
   const [tasks, setTasks] = useState([])
   const [form, setForm] = useState({ name: '', required_skills: '', estimated_effort: '', minimum_capacity_needed: '', priority: '', deadline: '' })
   const [message, setMessage] = useState('')
 
   const fetchTasks = () => {
-    fetch('http://localhost:3000/tasks')
+    fetch(`${API}/tasks`)
       .then(r => r.json())
       .then(setTasks)
+      .catch(err => console.error('Failed to fetch tasks:', err))
   }
 
   useEffect(() => { fetchTasks() }, [])
 
   const handleSubmit = async () => {
-    const res = await fetch('http://localhost:3000/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name,
-        required_skills: form.required_skills.split(',').map(s => s.trim()),
-        estimated_effort: parseInt(form.estimated_effort),
-        minimum_capacity_needed: parseInt(form.minimum_capacity_needed),
-        priority: parseInt(form.priority),
-        deadline: form.deadline
+    try {
+      const res = await fetch(`${API}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          required_skills: form.required_skills.split(',').map(s => s.trim()),
+          estimated_effort: parseInt(form.estimated_effort),
+          minimum_capacity_needed: parseInt(form.minimum_capacity_needed),
+          priority: parseInt(form.priority),
+          deadline: form.deadline
+        })
       })
-    })
-    const data = await res.json()
-    if (data.id) {
-      setMessage('Task created successfully! ✅')
-      setForm({ name: '', required_skills: '', estimated_effort: '', minimum_capacity_needed: '', priority: '', deadline: '' })
-      fetchTasks()
+      const data = await res.json()
+      if (data.id) {
+        setMessage('Task created successfully! ✅')
+        setForm({ name: '', required_skills: '', estimated_effort: '', minimum_capacity_needed: '', priority: '', deadline: '' })
+        fetchTasks()
+      } else {
+        setMessage(`❌ ${data.error || 'Failed to create task'}`)
+      }
+    } catch (err) {
+      setMessage(`❌ Error: ${err.message}`)
     }
   }
 
@@ -124,7 +138,7 @@ export default function Tasks() {
                   <span style={{ color: t.status === 'ALLOCATED' ? '#10b981' : '#f59e0b' }}>● {t.status}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {JSON.parse(t.required_skills).map((skill, j) => (
+                  {safeParseArray(t.required_skills).map((skill, j) => (
                     <span key={j} style={{
                       padding: '4px 10px', borderRadius: '20px',
                       background: '#1e1b4b', color: '#6366f1',
